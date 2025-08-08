@@ -1,6 +1,17 @@
 [package]
-name = "cli"
+name = "somfy-cli"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+readme = "../README.md"
+repository = "https://github.com/markusz/somfy-sdk-cli"
+
+[[bin]]
+name = "somfy"
+path = "src/main.rs"
 
 [dependencies]
+sdk = { version = "0.1.0", path = "../sdk" }
+tokio = { version = "1.47.1", features = ["rt", "rt-multi-thread", "macros"] }
+log = "0.4"
+env_logger = "0.11"
