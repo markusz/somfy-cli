@@ -23,8 +23,10 @@ async fn main() -> anyhow::Result<()> {
     let api_client = ApiClient::from(&args.gateway_pin, &args.api_key);
     let res_version = api_client.get_version().await;
     let res_gateways = api_client.get_gateways().await;
+    let res_devices = api_client.get_devices().await;
     debug!("{res_version:?}");
     debug!("{res_gateways:?}");
+    debug!("{res_devices:?}");
 
     Ok(())
 }
