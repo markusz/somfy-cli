@@ -24,9 +24,11 @@ async fn main() -> anyhow::Result<()> {
     let res_version = api_client.get_version().await;
     let res_gateways = api_client.get_gateways().await;
     let res_devices = api_client.get_devices().await;
+    let res_device = api_client.get_device("io://0812-2424-9999/12936651").await;
     debug!("{res_version:?}");
     debug!("{res_gateways:?}");
     debug!("{res_devices:?}");
+    debug!("{res_device:?}");
 
     Ok(())
 }
