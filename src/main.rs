@@ -1,6 +1,5 @@
 use clap::Parser;
-use log::debug;
-use sdk::api_client::ApiClient;
+use somfy_sdk::api_client::ApiClient;
 
 #[derive(Parser, Debug)]
 #[command(name = "somfy-cli", version, about = "Somfy CLI")]
