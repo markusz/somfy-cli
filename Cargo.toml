@@ -11,7 +11,7 @@ name = "somfy"
 path = "src/main.rs"
 
 [dependencies]
-somfy_sdk = { package = "somfy-sdk", version = "0.1.0", path = "../sdk"  }
+somfy_sdk = { package = "somfy-sdk", version = "0.2.0", path = "../sdk", features = ["generic-exec"] }
 tokio = { version = "1.47.1", features = ["rt", "rt-multi-thread", "macros"] }
 log = "0.4"
 env_logger = "0.11"
