@@ -44,20 +44,20 @@ pub(crate) struct PositionArgs {
 pub(crate) struct AliasAddArgs {
     pub(crate) alias_name: String,
     pub(crate) device_url: String,
-    #[arg(long, short='O', help = "Overwrites an existing alias")]
+    #[arg(long, short = 'O', help = "Overwrites an existing alias")]
     pub(crate) overwrite: bool,
 }
 
 #[derive(Args, Debug)]
 pub(crate) struct AliasRmArgs {
-    pub(crate) alias_name: String
+    pub(crate) alias_name: String,
 }
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum AliasCommands {
     Add(AliasAddArgs),
     Rm(AliasRmArgs),
-    Ls
+    Ls,
 }
 
 #[derive(Args, Debug)]
@@ -82,5 +82,5 @@ pub(crate) enum Command {
     Listen,
     // Scenario,
     #[command(name = "alias", long_about = "Manage aliases for devices")]
-    Alias(AliasArgs)
+    Alias(AliasArgs),
 }

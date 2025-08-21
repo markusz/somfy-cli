@@ -134,13 +134,19 @@ pub async fn _run_demo(api_client: ApiClient) {
     println!("\n🎧 Event listener demonstration...");
     match api_client.register_event_listener().await {
         Ok(listener) => {
-            println!("✅ Successfully registered event listener with ID: {}", listener.id);
+            println!(
+                "✅ Successfully registered event listener with ID: {}",
+                listener.id
+            );
             println!("   ℹ️  Listener will automatically expire after 10 minutes of inactivity");
 
             // Demonstrate fetching events
             match api_client.fetch_events(&listener.id).await {
                 Ok(_) => {
-                    println!("   ✅ Successfully fetched events for listener {}", listener.id);
+                    println!(
+                        "   ✅ Successfully fetched events for listener {}",
+                        listener.id
+                    );
                 }
                 Err(e) => println!("   ⚠️  Could not fetch events: {e:?}"),
             }
@@ -148,7 +154,10 @@ pub async fn _run_demo(api_client: ApiClient) {
             // Demonstrate unregistering the listener
             match api_client.unregister_event_listener(&listener.id).await {
                 Ok(_) => {
-                    println!("   ✅ Successfully unregistered event listener {}", listener.id);
+                    println!(
+                        "   ✅ Successfully unregistered event listener {}",
+                        listener.id
+                    );
                 }
                 Err(e) => println!("   ❌ Failed to unregister event listener: {e:?}"),
             }
@@ -198,7 +207,9 @@ pub async fn _run_demo(api_client: ApiClient) {
     println!("   //     actions,");
     println!("   // }};");
     println!("   // match api_client.execute_actions(request).await {{");
-    println!("   //     Ok(execution_id) => println!(\"✅ Started execution: {{}}\", execution_id.id),");
+    println!(
+        "   //     Ok(execution_id) => println!(\"✅ Started execution: {{}}\", execution_id.id),"
+    );
     println!("   //     Err(e) => println!(\"❌ Failed to execute actions: {{e:?}}\"),");
     println!("   // }}");
 

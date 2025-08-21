@@ -1,13 +1,13 @@
+use crate::config::config::get_config_folder;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use crate::config::config::get_config_folder;
 
 const CONFIG_FILENAME: &str = "env.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum HttpProtocol {
-    HTTP,
-    HTTPS,
+    Http,
+    Https,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -29,9 +29,9 @@ pub(crate) fn load_config_file() -> anyhow::Result<Option<CliApiClientConfig>> {
     let config = std::fs::read(&path);
     match config {
         Ok(val) => {
-            let config: CliApiClientConfig =  serde_json::from_slice(val.as_slice())?;
+            let config: CliApiClientConfig = serde_json::from_slice(val.as_slice())?;
             Ok(Some(config))
         }
-        Err(_) => Ok(None)
+        Err(_) => Ok(None),
     }
 }

@@ -2,7 +2,7 @@ use std::time::Duration;
 const MAX_LISTENER_LIFETIME: u64 = 60 * 10;
 
 pub(crate) struct PollerConfig {
-    pub(crate)max_wait: Duration,
+    pub(crate) max_wait: Duration,
     pub(crate) refresh_interval: Duration,
 }
 

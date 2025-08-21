@@ -9,7 +9,6 @@ use somfy_sdk::err::http::RequestError;
 use std::time::SystemTime;
 use tokio::time::sleep;
 
-
 pub struct CommandExecutor {
     pub(crate) api_client: ApiClient,
 }
@@ -42,7 +41,7 @@ impl CommandExecutor {
         };
 
         let action: String = state.into();
-        let action_group_label = format!("{} blinds {}", action, device_url).to_string();
+        let action_group_label = format!("{action} blinds {device_url}").to_string();
 
         let request = ActionGroup {
             label: Some(action_group_label),
@@ -105,7 +104,10 @@ impl CommandExecutor {
         let now = SystemTime::now();
         sleep(poller_config.refresh_interval).await;
         while now.elapsed().map_err(|e| RequestError::Server(e.into()))? < poller_config.max_wait {
-            let events = self.api_client.fetch_events(event_listener.id.as_str()).await;
+            let events = self
+                .api_client
+                .fetch_events(event_listener.id.as_str())
+                .await;
             if let Ok(events) = events {
                 for e in events {
                     println!("{e:?}")

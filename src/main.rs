@@ -1,17 +1,17 @@
 pub(crate) mod commands {
+    pub(crate) mod cli;
     pub(crate) mod dispatcher;
     pub(crate) mod executor;
-    pub(crate) mod cli;
 }
 pub(crate) mod utils {
     pub(crate) mod poller;
 }
 
 pub(crate) mod config {
-    pub(crate) mod dotenv;
-    pub(crate) mod loader;
     pub(crate) mod alias;
     pub(crate) mod config;
+    pub(crate) mod dotenv;
+    pub(crate) mod loader;
 }
 
 pub(crate) mod demos {
@@ -21,12 +21,11 @@ pub(crate) mod demos {
 use crate::commands::cli::Cli;
 use crate::commands::dispatcher::CommandDispatcher;
 use crate::config::loader::create_config_from_sources;
-use clap::{Parser};
+use clap::Parser;
 use somfy_sdk::api_client::ApiClient;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    //
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     let cli_args = Cli::parse();
