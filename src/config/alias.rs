@@ -1,4 +1,4 @@
-use crate::config::config::get_config_folder;
+use crate::config::config_dir::get_config_folder;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;

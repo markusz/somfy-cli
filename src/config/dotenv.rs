@@ -1,4 +1,4 @@
-use crate::config::config::get_config_folder;
+use crate::config::config_dir::get_config_folder;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 

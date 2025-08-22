@@ -6,10 +6,13 @@ pub(crate) mod commands {
 pub(crate) mod utils {
     pub(crate) mod poller;
 }
+pub(crate) mod output {
+    pub(crate) mod formatter;
+}
 
 pub(crate) mod config {
     pub(crate) mod alias;
-    pub(crate) mod config;
+    pub(crate) mod config_dir;
     pub(crate) mod dotenv;
     pub(crate) mod loader;
 }
@@ -34,7 +37,9 @@ async fn main() -> anyhow::Result<()> {
     let api_client = ApiClient::new(config).await?;
     let cmd_dispatcher = CommandDispatcher::from(api_client);
 
-    cmd_dispatcher.dispatch(cli_args.command).await?;
+    cmd_dispatcher
+        .dispatch(cli_args.command, cli_args.output_style)
+        .await?;
 
     Ok(())
 }

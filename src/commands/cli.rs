@@ -1,3 +1,4 @@
+use crate::output::formatter::OutputStyle;
 use clap::{Args, Parser, Subcommand};
 
 #[derive(Parser)]
@@ -22,6 +23,9 @@ pub(crate) struct Cli {
 
     #[arg(long, env = "SOMFY_GATEWAY_PORT")]
     pub(crate) gateway_port: Option<usize>,
+
+    #[arg(long, short = 'S', value_enum, default_value = "json", global = true)]
+    pub(crate) output_style: OutputStyle,
 }
 
 #[derive(Args)]
