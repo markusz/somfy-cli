@@ -127,13 +127,14 @@ somfy open living-room  # Instead of: somfy open io://1234-5678-9012/device1
 
 ## Configurable Output Formats
 
-The CLI supports two output formats that can be configured globally or per-command:
+The CLI supports two output formats that can be configured per-command:
 
 ### JSON Format (Default)
 ```bash
 somfy ls --output-style json
 # or
 somfy -S json ls
+somfy ls # Omitting the params defaults to JSON
 ```
 
 Example JSON output:
@@ -157,30 +158,27 @@ Example JSON output:
 ]
 ```
 
+Output can be piped, e.g.
+```
+somfy ls | jq '.[].label
+```
+
+
 ### Table Format
 ```bash
 somfy ls --output-style table
 # or  
-somfy -S table ls
+somfy ls -S table
 ```
 
 Example table output:
 ```
-┌──────────────────┬─────────────────────────────┬─────────────────────┬─────────────┬────────┬─────────────┬───────────┬──────────────────┬─────────────────┬────────────┐
-│ Label            │ Device URL                  │ Device Type         │ Open/Close  │ Status │ Closure (%) │ Tilt (%)  │ 'My' position (%) │ 'My' tilt (%)   │ Is Moving? │
-├──────────────────┼─────────────────────────────┼─────────────────────┼─────────────┼────────┼─────────────┼───────────┼──────────────────┼─────────────────┼────────────┤
-│ Living Room Blinds │ io://1234-5678-9012/device1 │ io:StackComponent   │     closed  │    available │          75 │         0 │               50 │               0 │      false │
-│ Bedroom Shutters │ io://1234-5678-9012/device2 │ io:StackComponent   │     closed  │    available │         100 │         0 │               25 │               0 │      false │
-└──────────────────┴─────────────────────────────┴─────────────────────┴─────────────┴────────┴─────────────┴───────────┴──────────────────┴─────────────────┴────────────┘
-```
-
-### Global Output Style
-
-Set the default output style for all commands:
-```bash
-export SOMFY_OUTPUT_STYLE=table
-# or add to your shell profile
-echo 'export SOMFY_OUTPUT_STYLE=table' >> ~/.bashrc
+┌────────────────────┬─────────────────────────────┬─────────────────────┬─────────────┬──────────────┬─────────────┬───────────┬───────────────────┬────────────────┬────────────┐
+│ Label              │ Device URL                  │ Device Type         │ Open/Close  │ Status       │ Closure (%) │ Tilt (%)  │ 'My' position (%) │ 'My' tilt (%)  │ Is Moving? │
+├────────────────────┼─────────────────────────────┼─────────────────────┼─────────────┼──────────────┼─────────────┼───────────┼───────────────────┼────────────────┼────────────┤
+│ Living Room Blinds │ io://1234-5678-9012/device1 │ io:StackComponent   │     closed  │    available │          75 │         0 │                50 │              0 │      false │
+│ Bedroom Shutters   │ io://1234-5678-9012/device2 │ io:StackComponent   │     closed  │    available │         100 │         0 │                25 │              0 │      false │
+└────────────────────┴─────────────────────────────┴─────────────────────┴─────────────┴──────────────┴─────────────┴───────────┴───────────────────┴────────────────┴────────────┘
 ```
 
 ## Configuration
@@ -231,13 +229,13 @@ somfy --api-key abc123 --gateway-url 192.168.1.100 ls
 
 # Using different output formats
 somfy ls --output-style table
-somfy -S json current-execs
+somfy current-execs -S json
 ```
 
 ## Development
 
 ### Prerequisites
-- Rust 1.70.0 or later
+- Rust 1.82.0 or later
 - Access to a Somfy TaHoma gateway
 - Valid API credentials
 
