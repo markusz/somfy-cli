@@ -1,258 +1,278 @@
 # Somfy CLI
 
-A command-line interface for interacting with Somfy smart home devices via the TaHoma Local API.
+A command-line interface for controlling Somfy smart home devices via the TaHoma Local API.
 
 ## Overview
 
-The CLI provides a comprehensive demonstration of all available Somfy API endpoints, allowing you to discover devices, monitor states, handle events, and execute actions directly from the command line.
-
-## Features
-
-- **Complete device discovery** and state management
-- **Real-time event listening** with automatic cleanup
-- **Action execution** with safety guards
-- **Comprehensive error handling** with user-friendly output
-- **Environment variable support** for credentials
-- **Colorized output** with emojis for better readability
+The Somfy CLI provides comprehensive control over Somfy smart home devices, allowing you to discover devices, control device states, manage aliases, and monitor device events directly from the command line.
 
 ## Installation
 
 ### From Source
 
 ```bash
-git clone https://github.com/user/somfy-sdk-cli.git
-cd somfy-sdk-cli
-cargo build --release -p cli
+git clone https://github.com/markusz/somfy-cli.git
+cd somfy-cli
+cargo build --release
 ```
+
+The compiled binary will be available at `target/release/somfy`.
 
 ### Using Cargo
 
 ```bash
-cargo install somfy-sdk-cli
+cargo install --path .
 ```
 
-## Usage
+## Authentication
 
-### Basic Usage
+The CLI supports multiple authentication methods, with the following order of precedence:
+
+### 1. Command Line Parameters (Highest Priority)
 
 ```bash
-# Run with credentials as arguments
-cargo run -p cli -- --api-key YOUR_API_KEY --gateway-pin YOUR_GATEWAY_PIN
-
-# Or use environment variables
-export SOMFY_API_KEY=your_api_key
-export SOMFY_GATEWAY_PIN=your_gateway_pin
-cargo run -p cli
+somfy --api-key YOUR_API_KEY --gateway-url gateway.local.ip --gateway-port 8443 ls
 ```
 
-### Command Line Options
+### 2. Environment Variables
 
 ```bash
-somfy-cli [OPTIONS]
-
-Options:
-    --api-key <API_KEY>          Your Somfy API key
-    --gateway-pin <GATEWAY_PIN>  Your TaHoma gateway PIN/ID
-    -h, --help                   Print help information
-    -V, --version                Print version information
+export SOMFY_API_KEY=your_api_key_here
+export SOMFY_GATEWAY_HOSTNAME=192.168.1.100
+export SOMFY_GATEWAY_PORT=8443
+somfy ls
 ```
 
-### Environment Variables
+### 3. Configuration File (.env.json)
 
-The CLI supports the following environment variables:
+Create a configuration file at `~/.config/somfy-cli/env.json` (or `%APPDATA%\somfy-cli\env.json` on Windows):
 
-- `SOMFY_API_KEY` - Your Somfy API key
-- `SOMFY_GATEWAY_PIN` - Your TaHoma gateway PIN/ID
-
-## Sample Output
-
-The CLI provides detailed, colorized output showing all API interactions:
-
-```
-🔌 Testing connection to Somfy API...
-✅ Successfully connected to API (protocol version: 3.7.2)
-
-🏠 Discovering gateways...
-✅ Found 1 gateway:
-  🌐 Gateway: 0000-1111-2222 (Status: ALIVE, Protocol: 3.7.2)
-
-🔍 Getting complete setup information...
-✅ Setup contains 1 gateways and 3 devices
-
-📱 Testing device discovery...
-✅ Found 3 devices via get_devices():
-  📱 Living Room Blinds (io://0000-1111-2222/12345678)
-  📱 Bedroom Shutters (io://0000-1111-2222/87654321)
-  📱 Kitchen Window (io://0000-1111-2222/11111111)
-
-🔍 Testing device details and states...
-✅ Device details for Living Room Blinds:
-  🏷️  Label: Living Room Blinds
-  🎛️  Type: io:StackComponent
-  ⚡ States: 3, Attributes: 5
-  
-  📊 Device states:
-    • core:StatusState: available
-    • core:Memorized1PositionState: 50
-    • core:MovingState: false
-
-🎧 Testing event listener functionality...
-✅ Successfully registered event listener with ID: 12345678-1234-5678-9012-123456789012
-✅ Fetched events: []
-✅ Successfully cleaned up event listener
-
-⚡ Checking current executions...
-✅ Found 0 current executions
-  ℹ️  No executions currently running
-
-🔧 Testing device filtering by controllable type...
-✅ Found 2 devices with controllable type 'io:StackComponent':
-  📱 io://0000-1111-2222/12345678
-  📱 io://0000-1111-2222/87654321
+```json
+{
+  "protocol": "Https",
+  "hostname": "192.168.1.100",
+  "port": 8443,
+  "api_key": "your_api_key_here"
+}
 ```
 
-## What the CLI Demonstrates
+## Commands
 
-The CLI showcases all implemented API functionality:
+### Device Control
 
-### System Information
-- API version retrieval and protocol verification
-- Gateway discovery and connectivity status
+#### Open Device
+Completely opens a device (blinds, shutters, etc.):
+```bash
+somfy open <device_url_or_alias>
+```
 
-### Device Management
-- Complete device discovery
-- Individual device details and capabilities
-- Device state monitoring and retrieval
-- Filtering devices by controllable type
+#### Close Device
+Completely closes a device:
+```bash
+somfy close <device_url_or_alias>
+```
 
-### Event System
-- Event listener registration and management
-- Event fetching with automatic cleanup
-- Proper listener lifecycle management
+#### Set Position
+Moves a device to a specific position (0-100%):
+```bash
+somfy position <device_url_or_alias> <percentage>
+```
 
-### Execution System
-- Current execution monitoring
-- Execution status tracking
-- (Action execution available but disabled by default for safety)
+### Device Information
 
-### Error Handling
-- Comprehensive error reporting
-- User-friendly error messages
-- Graceful handling of network issues and API errors
+#### List Devices
+Lists all available devices:
+```bash
+somfy ls
+```
 
-## Safety Features
+#### Current Executions
+Shows all currently running device executions:
+```bash
+somfy current-execs
+```
 
-The CLI includes several safety features to prevent accidental device actions:
+#### Listen for Events
+Listens for real-time device events:
+```bash
+somfy listen
+```
 
-- **Action execution is commented out by default** to prevent unintended device control
-- **Clear confirmation prompts** for potentially destructive operations
-- **Comprehensive logging** of all API interactions
-- **Graceful error handling** with detailed error reporting
+### Alias Management
+
+Create and manage aliases for device URLs to simplify commands:
+
+#### Add Alias
+```bash
+somfy alias add <alias_name> <device_url>
+somfy alias add --overwrite <alias_name> <device_url>  # Overwrite existing alias
+```
+
+#### Remove Alias
+```bash
+somfy alias rm <alias_name>
+```
+
+#### List Aliases
+```bash
+somfy alias ls
+```
+
+#### Using Aliases
+Once created, aliases can be used in place of device URLs:
+```bash
+somfy alias add living-room io://1234-5678-9012/device1
+somfy open living-room  # Instead of: somfy open io://1234-5678-9012/device1
+```
+
+## Configurable Output Formats
+
+The CLI supports two output formats that can be configured globally or per-command:
+
+### JSON Format (Default)
+```bash
+somfy ls --output-style json
+# or
+somfy -S json ls
+```
+
+Example JSON output:
+```json
+[
+  {
+    "label": "Living Room Blinds",
+    "device_url": "io://1234-5678-9012/device1",
+    "controllable_name": "io:StackComponent",
+    "states": [
+      {
+        "name": "core:StatusState",
+        "value": "available"
+      },
+      {
+        "name": "core:ClosureState", 
+        "value": 75
+      }
+    ]
+  }
+]
+```
+
+### Table Format
+```bash
+somfy ls --output-style table
+# or  
+somfy -S table ls
+```
+
+Example table output:
+```
+┌──────────────────┬─────────────────────────────┬─────────────────────┬─────────────┬────────┬─────────────┬───────────┬──────────────────┬─────────────────┬────────────┐
+│ Label            │ Device URL                  │ Device Type         │ Open/Close  │ Status │ Closure (%) │ Tilt (%)  │ 'My' position (%) │ 'My' tilt (%)   │ Is Moving? │
+├──────────────────┼─────────────────────────────┼─────────────────────┼─────────────┼────────┼─────────────┼───────────┼──────────────────┼─────────────────┼────────────┤
+│ Living Room Blinds │ io://1234-5678-9012/device1 │ io:StackComponent   │     closed  │    available │          75 │         0 │               50 │               0 │      false │
+│ Bedroom Shutters │ io://1234-5678-9012/device2 │ io:StackComponent   │     closed  │    available │         100 │         0 │               25 │               0 │      false │
+└──────────────────┴─────────────────────────────┴─────────────────────┴─────────────┴────────┴─────────────┴───────────┴──────────────────┴─────────────────┴────────────┘
+```
+
+### Global Output Style
+
+Set the default output style for all commands:
+```bash
+export SOMFY_OUTPUT_STYLE=table
+# or add to your shell profile
+echo 'export SOMFY_OUTPUT_STYLE=table' >> ~/.bashrc
+```
 
 ## Configuration
 
-### Credentials
+### Required Credentials
 
-You need two pieces of information to use the CLI:
-
-1. **API Key**: Your Somfy API authentication key
-2. **Gateway PIN/ID**: Your TaHoma gateway identifier (format: `0000-1111-2222`)
+- **API Key**: Your Somfy API authentication key
+- **Gateway URL**: Your TaHoma gateway IP address or hostname  
+- **Gateway Port**: Port number (typically 8443 for TaHoma Local API)
 
 ### Connection Settings
 
 The CLI automatically configures:
 - **Protocol**: HTTPS for secure connections
-- **Port**: 8443 (TaHoma Local API standard)
 - **Certificate Handling**: Automatic handling of self-signed certificates
-- **Timeout**: Reasonable timeouts for API calls
+- **Timeouts**: Reasonable timeouts for API calls
+
+## Examples
+
+### Basic Usage
+```bash
+# List all devices
+somfy ls
+
+# Open living room blinds using device URL
+somfy open io://1234-5678-9012/device1
+
+# Create an alias and use it
+somfy alias add living-room io://1234-5678-9012/device1
+somfy close living-room
+
+# Set blinds to 50% closed
+somfy position living-room 50
+
+# Monitor device events
+somfy listen
+```
+
+### Authentication Examples
+```bash
+# Using environment variables
+export SOMFY_API_KEY=abc123
+export SOMFY_GATEWAY_HOSTNAME=192.168.1.100
+somfy ls
+
+# Using command line parameters
+somfy --api-key abc123 --gateway-url 192.168.1.100 ls
+
+# Using different output formats
+somfy ls --output-style table
+somfy -S json current-execs
+```
 
 ## Development
 
 ### Prerequisites
-
 - Rust 1.70.0 or later
 - Access to a Somfy TaHoma gateway
 - Valid API credentials
 
 ### Building
-
 ```bash
-# Build the CLI
-cargo build -p cli
-
-# Build with optimizations
-cargo build --release -p cli
+cargo build --release
 ```
 
-### Running in Development
-
+### Running Tests
 ```bash
-# Run with cargo
-cargo run -p cli
-
-# Run with arguments
-cargo run -p cli -- --api-key YOUR_KEY --gateway-pin YOUR_PIN
+cargo test
 ```
 
-### Testing
-
+### Running in Development Mode
 ```bash
-# Run CLI tests
-cargo test -p cli
-
-# Run tests with output
-cargo test -p cli -- --nocapture
+cargo run -- ls
+cargo run -- --api-key YOUR_KEY --gateway-url YOUR_GATEWAY ls
 ```
-
-## Architecture
-
-The CLI is built on top of the SDK and demonstrates best practices for:
-
-- **Async runtime management** with Tokio
-- **Error handling** with comprehensive error reporting
-- **Logging** with structured output
-- **Configuration management** via environment variables and CLI args
-- **User experience** with colorized, informative output
-
-### Code Structure
-
-```
-cli/
-├── src/
-│   ├── main.rs                 # Main CLI entry point
-│   ├── commands.rs             # Command definitions
-│   ├── demo.rs                 # Demo functionality
-│   └── lib.rs                  # Library root
-├── Cargo.toml                  # Dependencies and metadata
-└── README.md                   # This file
-```
-
-## Extending the CLI
-
-To add new functionality:
-
-1. **Add new commands** in `src/commands.rs`
-2. **Extend demo scenarios** in `src/demo.rs`
-3. **Update argument parsing** in `src/main.rs`
-4. **Add tests** for new functionality
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Certificate errors**: The CLI handles self-signed certificates automatically
-2. **Network timeouts**: Check your gateway connectivity and network settings
-3. **Authentication errors**: Verify your API key and gateway PIN are correct
-4. **Permission errors**: Ensure your API key has the necessary permissions
+1. **Authentication errors**: Verify your API key and gateway URL are correct
+2. **Network timeouts**: Check gateway connectivity and network settings  
+3. **Permission errors**: Ensure your API key has necessary permissions
+4. **Certificate errors**: The CLI handles self-signed certificates automatically
 
 ### Debug Mode
 
 Run with detailed logging:
-
 ```bash
-RUST_LOG=debug cargo run -p cli
+RUST_LOG=debug cargo run -- ls
 ```
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](../LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
