@@ -1,7 +1,9 @@
 use chrono::DateTime;
 use clap::ValueEnum;
+use log::debug;
 use serde::Serialize;
 use somfy_sdk::commands::execute_action_group::ExecuteActionGroupResponse;
+use somfy_sdk::commands::get_current_executions::GetCurrentExecutionsResponse;
 use somfy_sdk::commands::get_devices::GetDevicesResponse;
 use somfy_sdk::commands::get_execution::GetExecutionResponse;
 use somfy_sdk::commands::types::{DeviceState, DeviceStateValue};
@@ -17,7 +19,7 @@ pub enum OutputStyle {
 }
 
 pub trait CliOutput: Serialize {
-    fn to_styled_cli_output(&self, style: OutputStyle) -> anyhow::Result<String> {
+    fn to_cli_output(&self, style: OutputStyle) -> anyhow::Result<String> {
         match style {
             OutputStyle::Json => self.to_json(),
             OutputStyle::Table => self.to_table(),
@@ -105,6 +107,20 @@ impl HumanFriendly for DeviceStateValue {
     }
 }
 
+impl CliOutput for GetCurrentExecutionsResponse {
+    fn to_table(&self) -> anyhow::Result<String> {
+        let mut builder = Builder::new();
+        builder.push_record(["ExecId", "Owner"]);
+        for exec in self {
+            builder.push_record([&exec.id, &exec.owner])
+        }
+
+        let mut table = builder.build();
+        let str = table.with(Style::sharp()).to_string();
+        Ok(str)
+    }
+}
+
 impl CliOutput for GetDevicesResponse {
     fn to_table(&self) -> anyhow::Result<String> {
         let mut builder = Builder::new();
@@ -149,8 +165,6 @@ impl CliOutput for GetDevicesResponse {
         }
 
         let mut table = builder.build();
-        // table.modify(Rows::first(), Color::rgb_bg(211,211,211));
-        // table.modify(Rows::first(), Justification::colored(' ', Color::rgb_bg(211,211,211)));
         table.modify(Columns::new(5..=8), Alignment::right());
 
         let str = table.with(Style::sharp()).to_string();
@@ -164,5 +178,21 @@ impl CliOutput for HashMap<String, String> {
         let mut table = builder.build();
         let str = table.with(Style::modern_rounded()).to_string();
         Ok(str)
+    }
+}
+
+pub(crate) fn print_to_console<T>(response: T, style: OutputStyle)
+where
+    T: CliOutput,
+{
+    match response.to_cli_output(style) {
+        Ok(str) => {
+            debug!("Command succeeded");
+            println!("{str}")
+        }
+        Err(e) => {
+            debug!("Command failed with Error: {e}");
+            println!("Command failed")
+        }
     }
 }

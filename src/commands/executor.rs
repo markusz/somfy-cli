@@ -90,16 +90,9 @@ impl CommandExecutor {
         self.api_client.get_current_executions().await
     }
 
-    pub(crate) async fn get_execution(
-        &self,
-        id: &str,
-    ) -> Result<GetExecutionResponse, RequestError> {
-        self.api_client.get_execution(id).await
-    }
-
     pub(crate) async fn listen(&self) -> Result<(), RequestError> {
         let event_listener = self.api_client.register_event_listener().await?;
-        let poller_config = PollerConfig::for_event_listener();
+        let poller_config = PollerConfig::EVENT_LISTENER;
 
         let now = SystemTime::now();
         sleep(poller_config.refresh_interval).await;

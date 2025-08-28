@@ -31,17 +31,35 @@ pub(crate) struct Cli {
 #[derive(Args)]
 pub(crate) struct OpenArgs {
     pub(crate) device_url: String,
+    #[arg(
+        long = "no-poll",
+        short = 'N',
+        help = "Return the immediate result of the API call without polling for a more detailed exec result."
+    )]
+    pub(crate) no_poll: bool,
 }
 
 #[derive(Args, Debug)]
 pub(crate) struct CloseArgs {
     pub(crate) device_url: String,
+    #[arg(
+        long = "no-poll",
+        short = 'N',
+        help = "Return the immediate result of the API call without polling for a more detailed exec result."
+    )]
+    pub(crate) no_poll: bool,
 }
 
 #[derive(Args, Debug)]
 pub(crate) struct PositionArgs {
     pub(crate) device_url: String,
     pub(crate) percentage: u8,
+    #[arg(
+        long = "no-poll",
+        short = 'N',
+        help = "Return the immediate result of the API call without polling for a more detailed exec result."
+    )]
+    pub(crate) no_poll: bool,
 }
 
 #[derive(Args, Debug)]
