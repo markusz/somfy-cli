@@ -191,8 +191,8 @@ where
             println!("{str}")
         }
         Err(e) => {
-            debug!("Command failed with Error: {e}");
-            println!("Command failed")
+            debug!("Error: {e}");
+            eprintln!("Error: {e}")
         }
     }
 }

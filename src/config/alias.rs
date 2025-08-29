@@ -1,4 +1,5 @@
 use crate::config::config_dir::get_config_folder;
+use anyhow::Context;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
@@ -27,28 +28,36 @@ impl AliasManager {
 
     fn ensure_file(&self) -> anyhow::Result<()> {
         if let Some(parent) = self.location.parent() {
-            fs::create_dir_all(parent)?;
+            fs::create_dir_all(parent).context(format!(
+                "Failed to create parent folders for alias file at location {:?}",
+                &self.location
+            ))?;
         }
 
         // Only create file if it doesn't exist
         if !self.location.exists() {
-            let empty_file = serde_json::to_string(&HashMap::<String, String>::default())?;
-            fs::write(&self.location, empty_file)?;
+            let empty_file = serde_json::to_string(&HashMap::<String, String>::default())
+                .context("Failed to create empty JSON dict")?;
+            fs::write(&self.location, empty_file).context(format!("Could not create empty alias file at location {:?}. Make sure the location is writeable", &self.location))?;
         }
         Ok(())
     }
 
     pub(crate) fn load_aliases(&self) -> anyhow::Result<HashMap<String, String>> {
         self.ensure_file()?;
-        let file_contents = std::fs::read(&self.location)?;
-        let aliases: HashMap<String, String> = serde_json::from_slice(file_contents.as_slice())?;
+        let file_contents = fs::read(&self.location).context(
+            "Failed to read alias file. Check that ~/.config/somfy-cli/alias.json exists",
+        )?;
+        let aliases: HashMap<String, String> = serde_json::from_slice(file_contents.as_slice())
+            .context(
+                "Failed to parse alias file into JSON. Check that ~/.config/somfy-cli/alias.json is valid",
+            )?;
 
         Ok(aliases)
     }
 
     pub(crate) fn get_alias(&self, alias: &str) -> Option<String> {
-        let aliases = self.load_aliases().unwrap_or_default();
-        aliases.get(alias).map(|s| s.to_string())
+        self.load_aliases().ok()?.get(alias).cloned()
     }
 
     pub(crate) fn add_alias(
@@ -85,8 +94,7 @@ impl AliasManager {
     }
 
     pub(crate) fn resolve_alias(&self, alias: &str) -> String {
-        let device_url = self.get_alias(alias);
-        device_url.unwrap_or(alias.to_string())
+        self.get_alias(alias).unwrap_or(alias.to_string())
     }
 }
 

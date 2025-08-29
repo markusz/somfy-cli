@@ -5,7 +5,6 @@ use somfy_sdk::commands::get_current_executions::GetCurrentExecutionsResponse;
 use somfy_sdk::commands::get_devices::GetDevicesResponse;
 use somfy_sdk::commands::get_execution::GetExecutionResponse;
 use somfy_sdk::commands::types::{Action, ActionGroup, Command};
-use somfy_sdk::err::http::RequestError;
 use std::time::SystemTime;
 use tokio::time::sleep;
 
@@ -34,14 +33,14 @@ impl CommandExecutor {
         &self,
         device_url: String,
         state: OpenClose,
-    ) -> Result<ExecuteActionGroupResponse, RequestError> {
+    ) -> anyhow::Result<ExecuteActionGroupResponse> {
         let params = match state {
             OpenClose::Closure(c_args) => vec![c_args.to_string()],
             _ => vec![],
         };
 
         let action: String = state.into();
-        let action_group_label = format!("{action} blinds {device_url}").to_string();
+        let action_group_label = format!("{action} {device_url}").to_string();
 
         let request = ActionGroup {
             label: Some(action_group_label),
@@ -54,13 +53,16 @@ impl CommandExecutor {
             }],
         };
 
-        self.api_client.execute_actions(&request).await
+        self.api_client
+            .execute_actions(&request)
+            .await
+            .map_err(|e| anyhow::anyhow!("{}", e))
     }
 
     pub(crate) async fn open(
         &self,
         device_url: String,
-    ) -> Result<ExecuteActionGroupResponse, RequestError> {
+    ) -> anyhow::Result<ExecuteActionGroupResponse> {
         self.open_close(device_url, OpenClose::Open).await
     }
 
@@ -68,7 +70,7 @@ impl CommandExecutor {
         &self,
         device_url: String,
         percent: u8,
-    ) -> Result<ExecuteActionGroupResponse, RequestError> {
+    ) -> anyhow::Result<ExecuteActionGroupResponse> {
         self.open_close(device_url, OpenClose::Closure(percent))
             .await
     }
@@ -76,27 +78,33 @@ impl CommandExecutor {
     pub(crate) async fn close(
         &self,
         device_url: String,
-    ) -> Result<ExecuteActionGroupResponse, RequestError> {
+    ) -> anyhow::Result<ExecuteActionGroupResponse> {
         self.open_close(device_url, OpenClose::Close).await
     }
 
-    pub(crate) async fn list_devices(&self) -> Result<GetDevicesResponse, RequestError> {
-        self.api_client.get_devices().await
+    pub(crate) async fn list_devices(&self) -> anyhow::Result<GetDevicesResponse> {
+        self.api_client
+            .get_devices()
+            .await
+            .map_err(|e| anyhow::anyhow!("{}", e))
     }
 
     pub(crate) async fn get_current_executions(
         &self,
-    ) -> Result<GetCurrentExecutionsResponse, RequestError> {
-        self.api_client.get_current_executions().await
+    ) -> anyhow::Result<GetCurrentExecutionsResponse> {
+        self.api_client
+            .get_current_executions()
+            .await
+            .map_err(|e| anyhow::anyhow!("{}", e))
     }
 
-    pub(crate) async fn listen(&self) -> Result<(), RequestError> {
+    pub(crate) async fn listen(&self) -> anyhow::Result<()> {
         let event_listener = self.api_client.register_event_listener().await?;
         let poller_config = PollerConfig::EVENT_LISTENER;
 
         let now = SystemTime::now();
         sleep(poller_config.refresh_interval).await;
-        while now.elapsed().map_err(|e| RequestError::Server(e.into()))? < poller_config.max_wait {
+        while now.elapsed().map_err(|e| anyhow::anyhow!("{}", e))? < poller_config.max_wait {
             let events = self
                 .api_client
                 .fetch_events(event_listener.id.as_str())
@@ -134,17 +142,20 @@ impl CommandExecutor {
         &self,
         exec_id: &str,
         poller_config: PollerConfig,
-    ) -> Result<GetExecutionResponse, RequestError> {
+    ) -> anyhow::Result<GetExecutionResponse> {
         let mut res = self.api_client.get_execution(exec_id).await;
         let now = SystemTime::now();
         sleep(poller_config.refresh_interval).await;
         while res.is_err()
-            && now.elapsed().map_err(|e| RequestError::Server(e.into()))? < poller_config.max_wait
+            && now.elapsed().map_err(|e| anyhow::anyhow!("{}", e))? < poller_config.max_wait
         {
             res = self.api_client.get_execution(exec_id).await;
             sleep(poller_config.refresh_interval).await;
         }
 
-        self.api_client.get_execution(exec_id).await
+        self.api_client
+            .get_execution(exec_id)
+            .await
+            .map_err(|e| anyhow::anyhow!("{}", e))
     }
 }

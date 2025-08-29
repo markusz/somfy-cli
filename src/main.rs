@@ -17,13 +17,10 @@ pub(crate) mod config {
     pub(crate) mod loader;
 }
 
-pub(crate) mod demos {
-    pub(crate) mod demo;
-}
-
 use crate::commands::cli::Cli;
 use crate::commands::dispatcher::CommandDispatcher;
-use crate::config::loader::create_config_from_sources;
+use crate::config::dotenv::load_config_file;
+use crate::config::loader::merge_config_sources;
 use clap::Parser;
 use somfy_sdk::api_client::ApiClient;
 
@@ -32,7 +29,9 @@ async fn main() -> anyhow::Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     let cli_args = Cli::parse();
-    let config = create_config_from_sources()?;
+    let config_file = load_config_file()?;
+
+    let config = merge_config_sources(&cli_args, &config_file)?;
 
     let api_client = ApiClient::new(config).await?;
     let cmd_dispatcher = CommandDispatcher::from(api_client);

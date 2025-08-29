@@ -1,4 +1,5 @@
 use crate::config::config_dir::get_config_folder;
+use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -29,7 +30,8 @@ pub(crate) fn load_config_file() -> anyhow::Result<Option<CliApiClientConfig>> {
     let config = std::fs::read(&path);
     match config {
         Ok(val) => {
-            let config: CliApiClientConfig = serde_json::from_slice(val.as_slice())?;
+            let config: CliApiClientConfig = serde_json::from_slice(val.as_slice())
+                .context("Failed to parse config file. Check that ~/.config/somfy-cli/env.json contains valid JSON")?;
             Ok(Some(config))
         }
         Err(_) => Ok(None),
