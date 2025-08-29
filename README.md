@@ -8,6 +8,34 @@ The Somfy CLI provides comprehensive control over Somfy smart home devices, allo
 
 ## Installation
 
+### Homebrew (Recommended)
+
+```bash
+# Add the tap (one-time setup)
+brew tap markusz/somfy-cli https://github.com/markusz/homebrew-somfy-cli
+
+# Install somfy-cli
+brew install somfy-cli
+
+# Update to latest version
+brew upgrade somfy-cli
+```
+
+### Pre-built Binaries
+
+Download the latest release from [GitHub Releases](https://github.com/markusz/somfy-cli/releases):
+
+- **macOS**: `somfy-cli-macos-x86_64` (Intel) or `somfy-cli-macos-aarch64` (Apple Silicon)
+- **Linux**: `somfy-cli-linux-x86_64`
+- **Windows**: `somfy-cli-windows-x86_64.exe`
+
+```bash
+# Example for macOS (Intel)
+curl -L https://github.com/markusz/somfy-cli/releases/latest/download/somfy-cli-macos-x86_64 -o somfy
+chmod +x somfy
+sudo mv somfy /usr/local/bin/
+```
+
 ### From Source
 
 ```bash
