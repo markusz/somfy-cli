@@ -1,0 +1,49 @@
+name: Test Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test-build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            asset_name: somfy-cli-linux-x86_64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            asset_name: somfy-cli-macos-x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            asset_name: somfy-cli-macos-aarch64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Test binary
+        if: runner.os != 'Windows'
+        run: |
+          ./target/${{ matrix.target }}/release/somfy --help
+          ./target/${{ matrix.target }}/release/somfy --version
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: target/${{ matrix.target }}/release/somfy${{ runner.os == 'Windows' && '.exe' || '' }}

@@ -21,9 +21,21 @@ jobs:
       tag_name: ${{ steps.tag.outputs.tag_name }}
     steps:
       - uses: actions/checkout@v4
-      - name: Get tag name
+      - name: Get or create tag name
         id: tag
-        run: echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            # Triggered by tag push
+            echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            # Manual workflow_dispatch - create a test tag
+            echo "tag_name=test-$(date +%s)" >> $GITHUB_OUTPUT
+          fi
+      - name: Create tag for manual runs
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git tag ${{ steps.tag.outputs.tag_name }}
+          git push origin ${{ steps.tag.outputs.tag_name }}
       - name: Create Release
         run: |
           gh release create ${{ steps.tag.outputs.tag_name }} \
