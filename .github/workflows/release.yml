@@ -6,6 +6,11 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
 env:
   CARGO_TERM_COLOR: always
 
@@ -13,20 +18,21 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-      release_id: ${{ steps.create_release.outputs.id }}
+      tag_name: ${{ steps.tag.outputs.tag_name }}
     steps:
       - uses: actions/checkout@v4
+      - name: Get tag name
+        id: tag
+        run: echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+        run: |
+          gh release create ${{ steps.tag.outputs.tag_name }} \
+            --title "Release ${{ steps.tag.outputs.tag_name }}" \
+            --notes "Release ${{ steps.tag.outputs.tag_name }}" \
+            --draft=false \
+            --prerelease=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
 
   build:
     needs: create-release
@@ -79,29 +85,17 @@ jobs:
           mkdir dist
           cp target/${{ matrix.target }}/release/somfy.exe dist/${{ matrix.asset_name }}
 
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./dist/${{ matrix.asset_name }}
-          asset_name: ${{ matrix.asset_name }}
-          asset_content_type: application/octet-stream
-
       - name: Create tarball for Homebrew (macOS only)
         if: matrix.target == 'x86_64-apple-darwin'
         run: |
           cd dist
-          tar -czf somfy-cli-${{ github.ref_name }}.tar.gz ${{ matrix.asset_name }}
+          tar -czf somfy-cli-${{ needs.create-release.outputs.tag_name }}.tar.gz ${{ matrix.asset_name }}
 
-      - name: Upload tarball for Homebrew
-        if: matrix.target == 'x86_64-apple-darwin'
-        uses: actions/upload-release-asset@v1
+      - name: Upload Release Assets
+        run: |
+          gh release upload ${{ needs.create-release.outputs.tag_name }} dist/${{ matrix.asset_name }}
+          if [ "${{ matrix.target }}" == "x86_64-apple-darwin" ]; then
+            gh release upload ${{ needs.create-release.outputs.tag_name }} dist/somfy-cli-${{ needs.create-release.outputs.tag_name }}.tar.gz
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.create-release.outputs.upload_url }}
-          asset_path: ./dist/somfy-cli-${{ github.ref_name }}.tar.gz
-          asset_name: somfy-cli-${{ github.ref_name }}.tar.gz
-          asset_content_type: application/gzip
