@@ -24,8 +24,23 @@ pub(crate) struct Cli {
     #[arg(long, env = "SOMFY_GATEWAY_PORT")]
     pub(crate) gateway_port: Option<usize>,
 
-    #[arg(long, short = 'S', value_enum, default_value = "json", global = true)]
+    #[arg(
+        long,
+        short = 'S',
+        value_enum,
+        default_value = "json",
+        global = true,
+        help = "Specify the output style of the commands response"
+    )]
     pub(crate) output_style: OutputStyle,
+
+    #[arg(
+        long,
+        short = 'C',
+        global = true,
+        help = "Use the certificate at the provided file path"
+    )]
+    pub(crate) cert: Option<String>,
 }
 
 #[derive(Args)]

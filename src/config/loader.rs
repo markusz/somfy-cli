@@ -18,10 +18,10 @@ pub(crate) fn merge_config_sources(
     };
 
     let api_key = match (&cli_args.api_key, config_file) {
-        (Some(api_key), _) => api_key.to_string(),
+        (Some(api_key), _) => api_key,
         (None, Some(cfg)) => match &cfg.api_key {
             None => return Err(Error::msg(API_KEY_ERROR)),
-            Some(key) => key.to_string(),
+            Some(key) => key,
         },
         _ => return Err(Error::msg(API_KEY_ERROR)),
     };
@@ -31,20 +31,29 @@ pub(crate) fn merge_config_sources(
     }
 
     let url = match (&cli_args.gateway_url, config_file) {
-        (Some(url), _) => url.to_string(),
+        (Some(url), _) => url,
         (None, Some(cfg)) => match &cfg.hostname {
             None => return Err(Error::msg(HOSTNAME_ERROR)),
-            Some(key) => key.to_string(),
+            Some(key) => key,
         },
         _ => return Err(Error::msg(HOSTNAME_ERROR)),
     };
 
+    let cert_strategy = match (&cli_args.cert, config_file) {
+        (Some(cert_path), _) => CertificateHandling::CertProvided(cert_path.to_string()),
+        (None, Some(cfg)) => match &cfg.cert_path {
+            None => CertificateHandling::DefaultCert,
+            Some(c) => CertificateHandling::CertProvided(c.to_string()),
+        },
+        _ => CertificateHandling::DefaultCert,
+    };
+
     let config = ApiClientConfig {
         protocol: HttpProtocol::HTTPS,
-        cert_handling: CertificateHandling::DefaultCert,
+        cert_handling: cert_strategy,
         port,
-        api_key,
-        url,
+        api_key: api_key.to_string(),
+        url: url.to_string(),
     };
 
     Ok(config)
@@ -62,12 +71,22 @@ mod tests {
         gateway_url: Option<String>,
         gateway_port: Option<usize>,
     ) -> Cli {
+        create_test_cli_with_cert(api_key, gateway_url, gateway_port, None)
+    }
+
+    fn create_test_cli_with_cert(
+        api_key: Option<String>,
+        gateway_url: Option<String>,
+        gateway_port: Option<usize>,
+        cert: Option<String>,
+    ) -> Cli {
         Cli {
             command: Command::ListDevices,
             api_key,
             gateway_url,
             gateway_port,
             output_style: OutputStyle::Json,
+            cert,
         }
     }
 
@@ -76,11 +95,21 @@ mod tests {
         hostname: Option<String>,
         port: Option<usize>,
     ) -> CliApiClientConfig {
+        create_test_config_with_cert(api_key, hostname, port, None)
+    }
+
+    fn create_test_config_with_cert(
+        api_key: Option<String>,
+        hostname: Option<String>,
+        port: Option<usize>,
+        cert_path: Option<String>,
+    ) -> CliApiClientConfig {
         CliApiClientConfig {
             protocol: Some(crate::config::dotenv::HttpProtocol::Https),
             hostname,
             port,
             api_key,
+            cert_path,
         }
     }
 
@@ -314,5 +343,200 @@ mod tests {
         assert_eq!(result.api_key, "my_secret_key"); // From config
         assert_eq!(result.url, "192.168.1.100"); // From CLI (override)
         assert_eq!(result.port, 9443); // From config (CLI port is None)
+    }
+
+    #[test]
+    fn test_cli_cert_takes_precedence_over_config() {
+        let cli_args = create_test_cli_with_cert(
+            Some("test_key".to_string()),
+            Some("test_host".to_string()),
+            None,
+            Some("/path/to/cli/cert.pem".to_string()),
+        );
+        let config_file = Some(create_test_config_with_cert(
+            None,
+            None,
+            None,
+            Some("/path/to/config/cert.pem".to_string()),
+        ));
+
+        let result = merge_config_sources(&cli_args, &config_file).unwrap();
+
+        match result.cert_handling {
+            CertificateHandling::CertProvided(path) => {
+                assert_eq!(path, "/path/to/cli/cert.pem");
+            }
+            _ => panic!("Expected CertProvided variant"),
+        }
+    }
+
+    #[test]
+    fn test_config_cert_used_when_cli_missing() {
+        let cli_args = create_test_cli_with_cert(
+            Some("test_key".to_string()),
+            Some("test_host".to_string()),
+            None,
+            None, // No cert in CLI
+        );
+        let config_file = Some(create_test_config_with_cert(
+            None,
+            None,
+            None,
+            Some("/path/to/config/cert.pem".to_string()),
+        ));
+
+        let result = merge_config_sources(&cli_args, &config_file).unwrap();
+
+        match result.cert_handling {
+            CertificateHandling::CertProvided(path) => {
+                assert_eq!(path, "/path/to/config/cert.pem");
+            }
+            _ => panic!("Expected CertProvided variant"),
+        }
+    }
+
+    #[test]
+    fn test_default_cert_when_no_cert_specified() {
+        let cli_args = create_test_cli_with_cert(
+            Some("test_key".to_string()),
+            Some("test_host".to_string()),
+            None,
+            None, // No cert in CLI
+        );
+        let config_file = Some(create_test_config_with_cert(
+            None, None, None, None, // No cert in config
+        ));
+
+        let result = merge_config_sources(&cli_args, &config_file).unwrap();
+
+        assert_eq!(result.cert_handling, CertificateHandling::DefaultCert);
+    }
+
+    #[test]
+    fn test_default_cert_when_no_config_file() {
+        let cli_args = create_test_cli_with_cert(
+            Some("test_key".to_string()),
+            Some("test_host".to_string()),
+            None,
+            None, // No cert in CLI
+        );
+        let config_file = None;
+
+        let result = merge_config_sources(&cli_args, &config_file).unwrap();
+
+        assert_eq!(result.cert_handling, CertificateHandling::DefaultCert);
+    }
+
+    #[test]
+    fn test_cert_precedence_with_mixed_sources() {
+        // Test that cert follows same precedence as other fields
+        let cli_args = create_test_cli_with_cert(
+            None,                              // API key from config
+            Some("cli_host".to_string()),      // Host from CLI
+            None,                              // Port default
+            Some("/cli/cert.pem".to_string()), // Cert from CLI
+        );
+        let config_file = Some(create_test_config_with_cert(
+            Some("config_key".to_string()),
+            Some("config_host".to_string()),
+            Some(9999),
+            Some("/config/cert.pem".to_string()),
+        ));
+
+        let result = merge_config_sources(&cli_args, &config_file).unwrap();
+
+        assert_eq!(result.api_key, "config_key"); // From config
+        assert_eq!(result.url, "cli_host"); // From CLI
+        assert_eq!(result.port, 9999); // From config
+        match result.cert_handling {
+            CertificateHandling::CertProvided(path) => {
+                assert_eq!(path, "/cli/cert.pem"); // From CLI (precedence)
+            }
+            _ => panic!("Expected CertProvided variant"),
+        }
+    }
+
+    #[test]
+    fn test_empty_cert_path_uses_default() {
+        let cli_args = create_test_cli_with_cert(
+            Some("test_key".to_string()),
+            Some("test_host".to_string()),
+            None,
+            Some("".to_string()), // Empty cert path
+        );
+        let config_file = None;
+
+        let result = merge_config_sources(&cli_args, &config_file).unwrap();
+
+        // Empty string should still create CertProvided (user explicitly provided empty path)
+        match result.cert_handling {
+            CertificateHandling::CertProvided(path) => {
+                assert_eq!(path, "");
+            }
+            _ => panic!("Expected CertProvided variant"),
+        }
+    }
+
+    #[test]
+    fn test_cert_from_config_only() {
+        let cli_args = create_test_cli(
+            Some("test_key".to_string()),
+            Some("test_host".to_string()),
+            None,
+        );
+        let config_file = Some(create_test_config_with_cert(
+            None,
+            None,
+            None,
+            Some("/only/in/config.pem".to_string()),
+        ));
+
+        let result = merge_config_sources(&cli_args, &config_file).unwrap();
+
+        match result.cert_handling {
+            CertificateHandling::CertProvided(path) => {
+                assert_eq!(path, "/only/in/config.pem");
+            }
+            _ => panic!("Expected CertProvided variant"),
+        }
+    }
+
+    #[test]
+    fn test_all_cert_scenarios_with_complete_configs() {
+        // Test comprehensive scenario with all certificate options
+        let test_cases = vec![
+            // (cli_cert, config_cert, expected_result)
+            (Some("/cli.pem"), Some("/config.pem"), "/cli.pem"), // CLI wins
+            (None, Some("/config.pem"), "/config.pem"),          // Config fallback
+            (Some("/cli.pem"), None, "/cli.pem"),                // CLI only
+                                                                 // Default case tested separately
+        ];
+
+        for (cli_cert, config_cert, expected) in test_cases {
+            let cli_args = create_test_cli_with_cert(
+                Some("test_key".to_string()),
+                Some("test_host".to_string()),
+                None,
+                cli_cert.map(|s| s.to_string()),
+            );
+            let config_file = Some(create_test_config_with_cert(
+                None,
+                None,
+                None,
+                config_cert.map(|s| s.to_string()),
+            ));
+
+            let result = merge_config_sources(&cli_args, &config_file).unwrap();
+
+            match result.cert_handling {
+                CertificateHandling::CertProvided(path) => {
+                    assert_eq!(path, expected);
+                }
+                _ => panic!(
+                    "Expected CertProvided variant for case {:?}",
+                    (cli_cert, config_cert)
+                ),
+            }
+        }
     }
 }

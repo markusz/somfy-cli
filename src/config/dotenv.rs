@@ -1,4 +1,4 @@
-use crate::config::config_dir::get_config_folder;
+use crate::config::common::get_config_folder;
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -17,6 +17,7 @@ pub(crate) struct CliApiClientConfig {
     pub hostname: Option<String>,
     pub port: Option<usize>,
     pub api_key: Option<String>,
+    pub cert_path: Option<String>,
 }
 
 fn get_file_location() -> PathBuf {

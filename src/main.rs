@@ -12,7 +12,7 @@ pub(crate) mod output {
 
 pub(crate) mod config {
     pub(crate) mod alias;
-    pub(crate) mod config_dir;
+    pub(crate) mod common;
     pub(crate) mod dotenv;
     pub(crate) mod loader;
 }
