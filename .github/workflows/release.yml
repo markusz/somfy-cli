@@ -1,0 +1,107 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_id: ${{ steps.create_release.outputs.id }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+  build:
+    needs: create-release
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            asset_name: somfy-cli-linux-x86_64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            asset_name: somfy-cli-linux-x86_64-musl
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            asset_name: somfy-cli-macos-x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            asset_name: somfy-cli-macos-aarch64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            asset_name: somfy-cli-windows-x86_64.exe
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+          
+      - name: Install musl-tools (Linux musl only)
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Create archive (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/somfy dist/${{ matrix.asset_name }}
+          chmod +x dist/${{ matrix.asset_name }}
+
+      - name: Create archive (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          mkdir dist
+          cp target/${{ matrix.target }}/release/somfy.exe dist/${{ matrix.asset_name }}
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./dist/${{ matrix.asset_name }}
+          asset_name: ${{ matrix.asset_name }}
+          asset_content_type: application/octet-stream
+
+      - name: Create tarball for Homebrew (macOS only)
+        if: matrix.target == 'x86_64-apple-darwin'
+        run: |
+          cd dist
+          tar -czf somfy-cli-${{ github.ref_name }}.tar.gz ${{ matrix.asset_name }}
+
+      - name: Upload tarball for Homebrew
+        if: matrix.target == 'x86_64-apple-darwin'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./dist/somfy-cli-${{ github.ref_name }}.tar.gz
+          asset_name: somfy-cli-${{ github.ref_name }}.tar.gz
+          asset_content_type: application/gzip
