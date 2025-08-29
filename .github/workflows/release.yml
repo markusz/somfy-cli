@@ -103,11 +103,13 @@ jobs:
           cd dist
           tar -czf somfy-cli-${{ needs.create-release.outputs.tag_name }}.tar.gz ${{ matrix.asset_name }}
 
-      - name: Upload Release Assets
-        run: |
-          gh release upload ${{ needs.create-release.outputs.tag_name }} dist/${{ matrix.asset_name }}
-          if [ "${{ matrix.target }}" == "x86_64-apple-darwin" ]; then
-            gh release upload ${{ needs.create-release.outputs.tag_name }} dist/somfy-cli-${{ needs.create-release.outputs.tag_name }}.tar.gz
-          fi
+      - name: Upload Release Asset
+        run: gh release upload ${{ needs.create-release.outputs.tag_name }} dist/${{ matrix.asset_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Homebrew tarball
+        if: matrix.target == 'x86_64-apple-darwin'
+        run: gh release upload ${{ needs.create-release.outputs.tag_name }} dist/somfy-cli-${{ needs.create-release.outputs.tag_name }}.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
