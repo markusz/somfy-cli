@@ -12,7 +12,7 @@ The Somfy CLI provides comprehensive control over Somfy smart home devices, allo
 
 ```bash
 # Add the tap (one-time setup)
-brew tap markusz/somfy-cli https://github.com/markusz/homebrew-somfy-cli
+brew tap markusz/somfy-cli
 
 # Install somfy-cli
 brew install somfy-cli
