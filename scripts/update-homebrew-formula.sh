@@ -20,7 +20,7 @@ echo "Updating Homebrew formula for version $VERSION"
 get_sha256() {
     local asset_name=$1
     local url="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/v${VERSION}/${asset_name}"
-    echo "Downloading $asset_name to calculate SHA256..."
+    echo "Downloading $asset_name to calculate SHA256..." >&2
     curl -sL "$url" | shasum -a 256 | cut -d' ' -f1
 }
 
