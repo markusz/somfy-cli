@@ -1,22 +1,25 @@
 class SomfyCli < Formula
   desc "Command-line interface for controlling Somfy smart home devices"
   homepage "https://github.com/markusz/somfy-cli"
-  version "0.1.0"
+  version "0.2.0"
   
   on_macos do
     if Hardware::CPU.intel?
       url "https://github.com/markusz/somfy-cli/releases/download/v#{version}/somfy-cli-v#{version}.tar.gz"
-      sha256 "UPDATE_ME_AFTER_FIRST_RELEASE" # This will be updated when you create your first release
+      sha256 "Downloading somfy-cli-v0.2.0.tar.gz to calculate SHA256...
+fb2d03e5b166eb64eec453bb7f50bba89621eef3ba1f2f9e6bb875477b71b32d"
     elsif Hardware::CPU.arm?
       url "https://github.com/markusz/somfy-cli/releases/download/v#{version}/somfy-cli-macos-aarch64"
-      sha256 "UPDATE_ME_AFTER_FIRST_RELEASE" # This will be updated when you create your first release
+      sha256 "Downloading somfy-cli-macos-aarch64 to calculate SHA256...
+7de1bc8600a74e2ac72afe059aff145a2545d53fa869a307f35d73ddc6490a60"
     end
   end
 
   on_linux do
     if Hardware::CPU.intel?
       url "https://github.com/markusz/somfy-cli/releases/download/v#{version}/somfy-cli-linux-x86_64"
-      sha256 "UPDATE_ME_AFTER_FIRST_RELEASE" # This will be updated when you create your first release
+      sha256 "Downloading somfy-cli-linux-x86_64 to calculate SHA256...
+1e984d2f59620af63ba8795b86f62341cebe5bea67960146a44a2f2329379188"
     end
   end
 
