@@ -13,25 +13,30 @@ use clap::{Args, Parser, Subcommand};
 pub(crate) struct Cli {
     #[command(subcommand)]
     pub(crate) command: Command,
-    /// Somfy API key (or set SOMFY_API_KEY)
-    #[arg(long, env = "SOMFY_API_KEY")]
-    pub(crate) api_key: Option<String>,
-
-    /// Gateway PIN (or set SOMFY_GATEWAY_PIN)
-    #[arg(long, env = "SOMFY_GATEWAY_HOSTNAME")]
-    pub(crate) gateway_url: Option<String>,
-
-    #[arg(long, env = "SOMFY_GATEWAY_PORT")]
-    pub(crate) gateway_port: Option<usize>,
 
     #[arg(
         long,
-        short = 'S',
-        value_enum,
-        default_value = "json",
-        global = true,
-        help = "Specify the output style of the commands response"
+        env = "SOMFY_API_KEY",
+        help = "Somfy API key (or set SOMFY_API_KEY)"
     )]
+    pub(crate) api_key: Option<String>,
+
+    #[arg(
+        long,
+        env = "SOMFY_GATEWAY_HOSTNAME",
+        help = "Gateway PIN (or set SOMFY_GATEWAY_PIN)"
+    )]
+    pub(crate) gateway_url: Option<String>,
+
+    #[arg(
+        long,
+        env = "SOMFY_GATEWAY_PORT",
+        help = "Gateway Port (or set SOMFY_GATEWAY_PORT), defaults to 8443"
+    )]
+    pub(crate) gateway_port: Option<usize>,
+
+    /// The format of the output
+    #[arg(long, short = 'S', value_enum, default_value = "json", global = true)]
     pub(crate) output_style: OutputStyle,
 
     #[arg(
@@ -105,15 +110,15 @@ pub(crate) struct AliasArgs {
 
 #[derive(Subcommand)]
 pub(crate) enum Command {
-    #[command(long_about = "Completely opens the device")]
+    #[command(long_about = "Open the device")]
     Open(OpenArgs),
-    #[command(long_about = "Completely closes the device")]
+    #[command(long_about = "Close the device")]
     Close(CloseArgs),
-    #[command(long_about = "Moves the device into the x % position")]
+    #[command(long_about = "Move the device into a specific position")]
     Position(PositionArgs),
-    #[command(name = "ls", long_about = "Lists all devices")]
+    #[command(name = "ls", long_about = "List all devices")]
     ListDevices,
-    #[command(name = "current-execs", long_about = "Lists all running executions")]
+    #[command(name = "current-execs", long_about = "List all running executions")]
     GetCurrentExecutions,
     #[command(long_about = "Listen for device events")]
     Listen,

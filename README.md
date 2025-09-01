@@ -1,10 +1,18 @@
 # Somfy CLI
 
-A command-line interface for controlling Somfy smart home devices via the TaHoma Local API.
+Control your Somfy smart home devices from any device - desktop, server, or automation scripts. Works entirely through your local gateway with no cloud dependencies required.
+
+## Why Somfy CLI?
+
+✅ **Universal Device Control** - Control from any device, not just your mobile app  
+✅ **100% Local & Private** - Communicates directly with your local TaHoma gateway - no cloud required  
+✅ **Automation Ready** - Perfect for scripts, cron jobs, and home automation systems
 
 ## Overview
 
-The Somfy CLI provides comprehensive control over Somfy smart home devices, allowing you to discover devices, control device states, manage aliases, and monitor device events directly from the command line.
+The Somfy CLI provides comprehensive control over Somfy smart home devices through the TaHoma Local API, allowing you to discover devices, control device states, manage aliases, and monitor device events directly from the command line.
+
+Built on the [Somfy SDK](https://github.com/markusz/somfy-sdk) for reliable and efficient communication with your TaHoma gateway.
 
 ## Installation
 
@@ -71,7 +79,7 @@ export SOMFY_GATEWAY_PORT=8443
 somfy ls
 ```
 
-### 3. Configuration File (.env.json)
+### 3. Configuration File (env.json)
 
 Create a configuration file at `~/.config/somfy-cli/env.json` (or `%APPDATA%\somfy-cli\env.json` on Windows):
 
@@ -82,6 +90,29 @@ Create a configuration file at `~/.config/somfy-cli/env.json` (or `%APPDATA%\som
   "port": 8443,
   "api_key": "your_api_key_here"
 }
+```
+
+## Prerequisites
+
+Before using the Somfy CLI, you need:
+
+1. **Developer Mode Enabled** - Your TaHoma gateway must have developer mode enabled
+2. **API Key** - A valid API key for local access
+
+**⚠️ Setup Required**: Follow the detailed setup instructions at [Somfy TaHoma Developer Mode](https://github.com/Somfy-Developer/Somfy-TaHoma-Developer-Mode) to enable developer mode and obtain your API key.
+
+## Getting Help
+
+The CLI provides comprehensive help documentation for all commands using the `--help` flag:
+
+```bash
+# General help
+somfy --help
+
+# Help for specific commands
+somfy open --help
+somfy alias --help
+somfy position --help
 ```
 
 ## Commands
@@ -133,7 +164,7 @@ Create and manage aliases for device URLs to simplify commands:
 #### Add Alias
 ```bash
 somfy alias add <alias_name> <device_url>
-somfy alias add --overwrite <alias_name> <device_url>  # Overwrite existing alias
+somfy alias add <alias_name> <device_url> --overwrite  # Overwrite existing alias
 ```
 
 #### Remove Alias
@@ -188,7 +219,7 @@ Example JSON output:
 
 Output can be piped, e.g.
 ```
-somfy ls | jq '.[].label
+somfy ls | jq '.[].label'
 ```
 
 
@@ -211,11 +242,11 @@ Example table output:
 
 ## Configuration
 
-### Required Credentials
+### Config parameters
 
-- **API Key**: Your Somfy API authentication key
-- **Gateway URL**: Your TaHoma gateway IP address or hostname  
-- **Gateway Port**: Port number (typically 8443 for TaHoma Local API)
+- **API Key**: Your Somfy API authentication key, obtain from your local gateway (**required**)
+- **Gateway URL**: Your TaHoma gateway IP address or hostname  (**required**)
+- **Gateway Port**: Port number (**optional**, defaults to 8443)
 
 ### Connection Settings
 
@@ -261,11 +292,6 @@ somfy current-execs -S json
 ```
 
 ## Development
-
-### Prerequisites
-- Rust 1.82.0 or later
-- Access to a Somfy TaHoma gateway
-- Valid API credentials
 
 ### Building
 ```bash
